@@ -4,99 +4,99 @@
 
 ### Application Startup
 
-The framework opens admin.sqlite and loads admin metadata.
+The framework opens `admin.sqlite` and loads admin metadata.
 
 - App startup goes through wsgi.py:87 and wsgi.py:145.
-- The App constructor calls create_admin: wsgi.py:164, admin.py:57.
+- The App constructor calls `create_admin`: wsgi.py:164, admin.py:57.
 - AdminTask receives the admin database path: admin.py:61.
-- Then init_admin runs: admin.py:43.
+- Then `init_admin` runs: admin.py:43.
 
 ### Building the Project Task Tree
 
 A runtime Task with task tree objects is built from admin metadata.
 
-- create_task reads sys_items from the admin task and looks for the root task record: task.py:9.
-- load_task builds the full object tree: task.py:331.
-- fill_rec_dicts reads sys_items, sys_fields, sys_filters, sys_report_params: task.py:307.
-- create_groups/create_items map rows to Group/Item instances and fill server_code from f_server_module: task.py:109, task.py:138, task.py:158.
-- After that, bind_items and compile_all connect and compile server code: task.py:339.
-- Compilation executes server_code and attaches functions to item/task: items.py:665.
+- `create_task` reads `sys_items` from the admin task and looks for the root task record: task.py:9.
+- `load_task` builds the full object tree: task.py:331.
+- `fill_rec_dicts` reads `sys_items`, `sys_fields`, `sys_filters`, `sys_report_params`: task.py:307.
+- `create_groups/create_items` map rows to Group/Item instances and fill `server_code` from `f_server_module`: task.py:109, task.py:138, task.py:158.
+- After that, `bind_items` and `compile_all` connect and compile server code: task.py:339.
+- Compilation executes `server_code` and attaches functions to item/task: items.py:665.
 
 ### Selecting the Main Project Database
 
-- Admin builder reads sys_tasks and sets task_db_info/task_db_type: builder.py:96.
-- load_task transfers that into the runtime task and creates the DB adapter/pool: task.py:342.
+- Admin builder reads `sys_tasks` and sets `task_db_info/task_db_type`: builder.py:96.
+- `load_task` transfers that into the runtime task and creates the DB adapter/pool: task.py:342.
 
 ### User Selects an Object from the Task Tree
 
-- HTTP entry goes through App.call and routes to index/api: wsgi.py:206, wsgi.py:241, wsgi.py:300.
-- Frontend initially sends load via /api: task.js:330, task.js:110.
-- Backend on_api parses the JSON packet and calls get_response: wsgi.py:667, wsgi.py:726.
-- For load, it returns task.get_info plus templates/settings/locale/language: wsgi.py:520.
+- HTTP entry goes through `App.call` and routes to index/api: wsgi.py:206, wsgi.py:241, wsgi.py:300.
+- Frontend initially sends `load` via `/api`: task.js:330, task.js:110.
+- Backend `on_api` parses the JSON packet and calls `get_response`: wsgi.py:667, wsgi.py:726.
+- For `load`, it returns `task.get_info` plus `templates/settings/locale/language`: wsgi.py:520.
 
 ### When the User Opens a Specific Object
 
-- Frontend sends open: item.js:1778.
-- Backend get_response for open calls select_records: wsgi.py:727, items.py:232.
-- select_records runs hooks and SQL read through execute_open: items.py:240, items.py:178.
+- Frontend sends `open`: item.js:1778.
+- Backend `get_response` for `open` calls `select_records`: wsgi.py:727, items.py:232.
+- `select_records` runs hooks and SQL read through `execute_open`: items.py:240, items.py:178.
 
 ### When Frontend Calls task.server("function_name")
 
-- JS server method is here: abstr_item.js:373.
-- It sends the server request: abstr_item.js:389.
-- Backend routes this to server_func/getattr and executes the function by name: wsgi.py:731, wsgi.py:743.
+- JS `server` method is here: abstr_item.js:373.
+- It sends the `server` request: abstr_item.js:389.
+- Backend routes this to `server_func/getattr` and executes the function by name: wsgi.py:731, wsgi.py:743.
 
 Core idea:
 
-admin.sqlite is the metadata database from which the framework builds task tree objects (Task/Group/Item) and their server code; after that, the client works through /api, and for a specific object it uses open or server calls through item_id and function name.
+`admin.sqlite` is the metadata database from which the framework builds task tree objects (Task/Group/Item) and their server code; after that, the client works through `/api`, and for a specific object it uses `open` or `server` calls through `item_id` and `function name`.
 
 ## /api Endpoint
 
-Through wsgi.py, there is effectively one API entry point: /api.
+Through wsgi.py, there is effectively one API entry point: `/api`.
 
 The endpoint receives:
 
-- POST JSON packet in the format [method, task_id, item_id, params, modification]
+- POST JSON packet in the format `[method, task_id, item_id, params, modification]`.
 - Parsing is done in wsgi.py
 
 Exposed methods are:
 
-- load
-- open
-- apply
-- server
-- print
+- `load`
+- `open`
+- `apply`
+- `server`
+- `print`
 
 That branching is in wsgi.py.
 
 How mapping works:
 
-1. task_id selects task context:
-   - 0 means admin task
-   - > 0 means project task
+1. `task_id` selects task context:
+   - `0` means admin task
+   - `> 0` means project task
 
-2. item_id selects object:
-   - task.item_by_ID(item_id)
+2. `item_id` selects object:
+   - `task.item_by_ID(item_id)`
 
-3. method selects operation:
-   - open -> item.select_records(...)
-   - apply -> item.apply_changes(...)
-   - server -> server_func(item, func_name, params)
-   - print -> item.print_report(...)
-   - load -> init_client(...)
+3. method `selects_records`:
+   - `open` -> `item.select_records(...)`
+   - `apply` -> `item.apply_changes(...)`
+   - `server` -> `server_func(item, func_name, params)`
+   - `print` -> `item.print_report(...)`
+   - `load` -> `init_client(...)`
 
 4. Named server call:
-   - server_func does getattr(obj, func_name) and invokes the function.
+   - `server_func` does `getattr(obj, func_name)` and invokes the function.
 
-5. Frontend side targeting /api:
-   - JSON POST goes from process_request in task.js
+5. Frontend side targeting `/api`:
+   - JSON POST goes from `process_request` in task.js
    - URL is explicitly api in task.js
-   - task.server(...) packs server method call in abstr_item.js
+   - `task.server(...)` packs server method call in abstr_item.js
 
-6. Endpoints outside /api:
-   - upload at /upload: wsgi.py
-   - ext at /ext: wsgi.py
-   - index/login/logout routing in wsgi.py
+6. Endpoints outside `/api`:
+   - upload at `/upload`: wsgi.py
+   - ext at `/ext`: wsgi.py
+   - `index/login/logout` routing in wsgi.py
 
 ### Example 1: load (task initialization on client)
 
@@ -106,11 +106,11 @@ Request body to /api:
 ["load", 1, 1, null, 0]
 ```
 
-- method = load
-- task_id = 1 (project task)
-- item_id = 1 (task object)
-- params = null
-- modification = 0
+- `method = load`
+- `task_id = 1` (project task)
+- `item_id = 1` (task object)
+- `params = null`
+- `modification = 0`
 
 Backend processing:
 
@@ -146,13 +146,13 @@ Typical response shape:
 
 Frontend builds params with keys:
 
-- __expanded
-- __fields
-- __open_empty
-- __order
-- __filters
-- __limit
-- __offset
+- `__expanded`
+- `__fields`
+- `__open_empty`
+- `__order`
+- `__filters`
+- `__limit`
+- `__offset`
 
 This is visible in item.js.
 
@@ -178,8 +178,8 @@ Example request:
 
 Backend processing:
 
-- open => select_records: wsgi.py
-- select_records pipeline: items.py
+- `open` => `select_records`: wsgi.py
+- `select_records` pipeline: items.py
 
 Typical response:
 
@@ -204,9 +204,9 @@ Typical response:
 
 Frontend call:
 
-- task.server("prepare_users") in JS
-- server method: abstr_item.js
-- It sends: send_request("server", [func_name, params]): abstr_item.js
+- `task.server("prepare_users")` in JS
+- `server` method: abstr_item.js
+- It sends: `send_request("server", [func_name, params])`: abstr_item.js
 
 Request body:
 
@@ -216,8 +216,8 @@ Request body:
 
 Backend processing:
 
-- server => server_func: wsgi.py
-- getattr and function call: wsgi.py
+- `server` => `server_func`: wsgi.py
+- `getattr` and function call: wsgi.py
 
 Typical response:
 
@@ -234,9 +234,9 @@ Typical response:
 
 Core idea:
 
-- /api receives one uniform JSON packet.
-- method determines what happens (load/open/apply/server/print).
-- For server calls, function name is params[0], arguments are params[1].
+- `/api` receives one uniform JSON packet.
+- method determines what happens (`load/open/apply/server/print`).
+- For `server` calls, function name is `params[0]`, arguments are `params[1]`.
 
 ## Record Save Flow (edit form -> database)
 
@@ -244,12 +244,13 @@ User clicks OK in the form.
 
 ### apply_record
 
-apply_record is called in item.js:3327.
+`apply_record` is called in item.js:3327.
 
-- apply_record first runs post: item.js:3339.
-  - post does:
+- `apply_record` first runs `post`: item.js:3339.
+  
+  - `post` does:
     - record validation (check_record_valid),
-    - on_before_post,
+    - `on_before_post`,
     - post for details currently in edit/insert,
     - write change into change_log,
     - state switch to browse,
@@ -257,24 +258,26 @@ apply_record is called in item.js:3327.
 
     All of that is in item.js:2325.
 
-    Important: post does not go to server. post is a local commit in client dataset/change_log. There is no /api call in that function.
+    Important: `post` does not go to server. `post` is a local commit in client `dataset/change_log`. There is no `/api` call in that function.
 
-- After post comes apply, apply_record calls apply with callback: item.js:3353.
-  - apply checks:
-    - if detail has master_applies, it propagates to master,
-    - if item is still in edit/insert, it runs post,
-    - it takes delta changes from change_log.
+- After `post` comes `apply`, `apply_record` calls `apply` with callback: item.js:3353.
+  
+  - `apply_checks`:
+    - if detail has `master_applies`, it propagates to master,
+    - if item is still in edit/insert, it runs `post`,
+    - it takes `delta changes` from `change_log`.
 
     Main logic is in item.js:2402.
-    Before sending apply, hook params are packed.
+    Before sending `apply`, hook params are packed.
 
-    - on_before_apply is collected through caller -> master chain: item.js:2378.
+    - `on_before_apply` is collected through caller -> master chain: item.js:2378.
     - Send to server.
-    - If there are changes, it sends apply request with payload [changes, params_dict]: item.js:2447.
-    - That request goes to /api through process_request: task.js:86, task.js:110.
+    - If there are changes, it sends `apply` request with payload [changes, params_dict]: item.js:2447.
+    - That request goes to `/api` through `process_request`: task.js:86, task.js:110.
 
 - Backend dispatch:
-  - /api parses method/task_id/item_id/params/modification: wsgi.py:667.
+  
+  - `/api` parses method/task_id/item_id/params/modification: wsgi.py:667.
   - For method apply it calls item.apply_changes(...): wsgi.py:734.
   - Server-side apply_changes:
     - reconstructs delta from client changes,

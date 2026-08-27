@@ -184,5 +184,3 @@ DuckDB is great for:
 - An API that reads and aggregates data.
 
 It is not the first choice when you have many concurrent users who are constantly changing data. For such an OLTP case PostgreSQL is usually better. DuckDB is primarily an analytical database.
-
-For your project, I would first introduce it as a layer for reading and analyzing existing data, with a single .duckdbfile and clear SQL queries from server.py.

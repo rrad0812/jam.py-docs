@@ -1,25 +1,20 @@
 
-# Jam.py FAQ
+# Jampy FAQ
 
 ## 01 What is the difference between catalogs and journals
 
-When a new project is created, its task tree has the following groups: `Catalogs`, `Journals` and `Reports`.
+From version V7 Jampy makes almost no distinction between `Catalogs` and `Journals` groups:
 
-`Catalogs` and `Journals` belong to the `Item Group` type and have the same functional purpose.
+- Both have the same common fields,
+- the same attributes can be set on both,
+- both contain objects that have a coresponding table in the database.
+- The only thing to note is that Catalogs are intended for storing master data for the business factors of the application, while Journals are intended for storing transaction data for the business factors of the application.
 
-We created them to distinguish between two types of data items:
-
-- data items that contain information of catalog type such as customers, organizations, tracks, etc. - Catalogs
-
-- data items that store information about events recorded in some documents, such as invoices, purchase orders, etc. - Journals
+In addition to these two, there is also a `Reports` group that stores defined objects of reports on the business factors of the application, which by their nature are not connected to tables in the database. Here it is necessary to distinguish cases when a Report builds its own table to produce output, as is already common in OLAP systems.
 
 `System` group is created automatically with `History` item creation.
 
 ## 02 How to upgrade an already created project to a new version of jampy
-
-To upgrade an existing V7 project to a new package you must update the package.
-
-You can do it using `pip`.
 
 If you’re using Linux, Mac OS X or some other flavour of Unix, enter the command:
 
@@ -71,7 +66,7 @@ The copied `Item` inherits selected fields from the source `Item` and can add an
 
 During the copy process, you may choose a different database table for the copied `Item`. The copied Item performs all CRUD operations on its own table while continuing to use the field definitions inherited from the source `Item`.
 
-This makes `the Copy` feature useful when multiple database tables share the same structure. A single source `Item` defines the fields, while each copied Item can work with a different table.
+This makes the `Copy` feature useful when multiple database tables share the same structure. A single source `Item` defines the fields, while each copied Item can work with a different table.
 
 It is possible to detach the table from the source.
 
@@ -81,10 +76,25 @@ Think of a copied `Item` as sharing its schema definition with the source Item, 
 
 ## 06 What are foreign keys used for
 
-Foreign keys that you can create in the Jam.py V5 Application Builder, prevent deletion of a record in the lookup table if a reference to it is stored in the lookup field.
+Definition:
 
-For example, when a foreign key is created on the “Customer” field for “Invoices” item, user won’t be able to delete a customer in “Customers” catalog if a reference to it is stored in “Invoices”.
+> [!Note]
+>
+> - A foreign key is primarily a database mechanism that protects so-called referential integrity.  
+> - Referential integrity refers to the integrity of records in a referenced database table.  
+> - In addition, a foreign key determines the rules of behavior of the referenced and current table records during update or deletion operations in the referenced table.  
+> - In short, referential integrity is a tool for maintaining stable and predictable behavior of relationships between tables in a database.
 
-The soft delete attribute of the lookup item must be set to false (see Item Editor Dialog ) for the lookup field to appear in the Foreign Keys Dialog
+In version V5, Jampy fully supported referential integrity, i.e. foreign keys for the case of RESTRICT update/delete operations on a referenced record.
 
-The creation/deleting support for foreign keys is dropped in Jam.py V7.
+Since version V7, Jampy does not support foreign keys, or referential integrity, but it is still possible to define referential integrity directly in the database.
+
+As a replacement, Jampy offers DELETED fields, which can achieve similar effects at the application level, with this approach reducing referential integrity problems when maintaining the database.
+
+We also have an `f_check_before_deleting` field attribute with which, when set, we get very similar behavior as if we had a foreign key in RESTRICT mode.
+
+> [!Note]
+>
+> It should always be kept in mind that Jampy's CRUD system is a document type, meaning that either everything or nothing happens on tables connected by relations during update/delete operations, which corresponds to the CASCADE foreign key model for the case of updating/deleting a referenced record.
+>
+> But here too there is a difference in behavior for the case where `f_master_applies` of the object (item) attribute is set. In that case Jampy CRUD treats each table in the relationship separately.

@@ -6,7 +6,7 @@
 ## Content
 
 - [00 What is new in v7][00]
-- [01 How do I write global scope functions][01]
+- [01 How to write global scope functions][01]
 - [02 How to validate field value][02]
 - [03 How to add a button to a form][03]
 - [04 How to execute Python code from client][04]
@@ -19,40 +19,42 @@
 - [11 How to save edit form without closing it][11]
 - [12 How to save changes to two tables in same transaction on the server][12]
 - [13 How to prevent duplicate values in a table field][13]
-- [14 How to implement some sort of basic multi-tenancy? For example, to have users with separate data][14]
-- [15 Importing existing database tables][15]
-- [16 How can I use data from some other database(s) tables][16]
-- [17 How I can process a request or get some data from other application or service][17]
-- [18 How can I perform calculations in the background][18]
-- [19 Is it supported to have details inside details][19]
-- [20 Export to / import from csv files][20]
+- [14 How to implement some sort of basic multi-tenancy][14]
+- [15 How to immport existing database tables][15]
+- [16 How to use data from some other database(s) tables][16]
+- [17 How to process a request or get some data from other application or service][17]
+- [18 How to perform calculations in the background][18]
+- [19 How to have details inside details][19]
+- [20 How to export to / import from csv files][20]
 - [21 How to write tests][21]
 - [22 How to cascade delete records][22]
-- [23 How to Navigate Between Forms While Preserving Data][23]
-- [24 Custom production html page][24]
+- [23 How to transfer data between forms][23]
+- [24 How to do with custom production html page][24]
 - [25 How to migrate development to production][25]
 - [26 How to migrate to another database][26]
+- [27 How to deploy Jam.py app at Linux Apache http server][27]
+- [28 How to do with Nginx with Gunicorn or uvicorn][28]
+- [29 How to do increment search by lookup fields][29]
 
 ---
 
-## 00 What is new in v7
+## 00 What is new in Jampy v7
 
-1. **There are now permissions for fields**. You can declare some fields as hidden or read only for
-   a role. Hidden fields are not available on the client and couldn't be changed by the user with this role from the browser. Read only fields are disabled in the browser and if changed won't be saved on the server.
+1. **There are now permissions for fields**.  
+   You can declare some fields as hidden or read only for a role. Hidden fields are not available on the client and couldn't be changed by the user with this role from the browser. Read only fields are disabled in the browser and if changed won't be saved on the server.
 
-2. **There won't be details as a special type**. Any item can be a detail of the other if they are
-   linked by a lookup field. For example, invoices can be a detail of customers because invoices have the customer lookup field whose lookup item is customers.
+2. **There won't be details as a special type**.  
+   Any item can be a detail of the other if they are linked by a lookup field. For example, invoices can be a detail of customers because invoices have the customer lookup field whose lookup item is customers.
 
    This way you don't need to write the code to make an invoice_table a detail of tracks as in the current demo.
 
-3. **There are calculated fields that are also based on lookup fields.**
-
+3. **There are calculated fields that are also based on lookup fields.**  
    For example, you can have a field that will display the number of sold tracks of the tracks record without writing code.
 
-4. **The unlimited level of nested details is supported.**
+4. **The unlimited level of nested details is supported.**  
 
-5. **Reading and writing of the data are changed**. The `on_open` and `on_apply` events are
-   deprecated. Instead of them `on_before_open`,  `on_after_open` and `on_before_apply_record`, `on_after_apply_record` events are introduced.
+5. **Reading and writing of the data are changed**.  
+   The `on_open` and `on_apply` events are deprecated. Instead of them `on_before_open`,  `on_after_open` and `on_before_apply_record`, `on_after_apply_record` events are introduced.
 
    The `on_before_open` event is triggered before the sql request is executed and can be used to validate the request and add additional filters,  
 
@@ -68,42 +70,37 @@
    - then for each detail that has been changed the `on_before_apply_record` event is triggered
    - then that event is triggered for sub detail changes and so on.
 
-   After that in `the reverse order` the `on_after_apply_record` events are triggered for sub details, details and master. That is true even if changes were made to the detail only.
+   After that in the reverse order the `on_after_apply_record` events are triggered for sub details, details and master. That is true even if changes were made to the detail only.
 
    That is the changes to the document (record and its details) are saved as a hole.
 
-6. The code that works with database data is rewritten. For MSSQL and MYSQL alternative drivers are
-   supported.
+6. **The code that works with database data is rewritten**.  
+   For MSSQL and MYSQL alternative drivers are supported.
 
-7. The text field size can be changed for databases that have text fields with a specified length.
+7. **The text field size can be changed for databases that have text fields
+   with a specified length**.  
    If the new size is bigger, the length of the field is changed, otherwise, the field length remains the same but the app checks that the length text is less than the size value.
 
-8. The `edit` and `post` methods when charging a record can be omitted. They are implemented
-   internally.  
+8. **The `edit` and `post` methods when charging a record can be omitted**.  
+   They are implemented internally.  
 
-9. In App builder copies (clones) of items could be created.
+9. **In App builder copies (clones) of items could be created.**
 
-10. It is possible to move items to other groups.
-
-> [!Note]
-> **The concept of Jam.py** is now as follows
->
-> You can use Jam.py for the development of interface loaded applications.
-> These applications can be developed in the same way as desktop applications, regardless of the
-> availability of code on the client (in the browser debugger). This is possible due to the full
-> control over what data the user on the client can access and what changes he can make to the data > that can be implemented on the server. This control is available due to setting roles to the
-> elements and fields of the project and very simple way of implementing restrictions with the
-> server event handlers.
+10. **It is possible to move items to other groups**.
 
 [Return to Content](#content)
 
-## 01 How do I write global scope functions
+## 01 How to write global scope functions
 
-Each function defined in the server or client module of an item becomes an attribute of the item.
+> [!Note]
+> Each function defined in the server or client module of an item becomes an attribute of the item.
 
 Thus, using the task tree, you can access any function declared in the client or server module in any project module.
 
-For example, if we have a function `some_func` declared in the `Customers` client module, we can execute it in any module of the project. Note that `the task` is a global variable on the client.
+For example, if we have a function `some_func` declared in the `Customers` client module, we can execute it in any module of the project.
+
+> [!Note]
+> The `task` is a global variable on the client.
 
 ```js
 task.customers.some_func()
@@ -118,13 +115,23 @@ def on_apply(item, delta, params):
 
 Note that event handlers are just functions and can also be called from other modules.
 
+> [!Note]
+>
+> Since the task object on the client is global, it is best to copy it before using it, and work with a copy, which will correctly merge data changes with  calling apple() etc..., and which will not, in doing so, change the metadata of the underlying task object on the client.
+>
+> This way you won't potentially disrupt the application if you have different objects (items) open in application tabs (not browser tabs - each browser tab gets a fresh client task object).
+>
+> On the other hand, on the server, the any of task project items gets its own version of the task object, which means you can do whatever you want with it, because you cannot influence the requests of other users who have their own version of the server task object.
+
 [Return to Content](#content)
 
 ## 02 How to validate field value
 
+### on_field_validate
+
 Write the `on_field_validate` event handler to validate field value.
 
-For example, the event will triggered when the `post` method is called, that saves the record in memory or when the user leaves the input used to edit the `unitprice` field value.
+For example, the event will triggered when the `post` method is called, that saves the record in memory.
 
 ```js
 function on_field_validate(field) {
@@ -134,7 +141,12 @@ function on_field_validate(field) {
 }
 ```
 
-As an example, below is the code that doesn’t use `the on_field_validate` method and checks the value of the unitprice field and prevents the user from leaving the input when the value is less than or equal to zero:
+> [!Note]
+> This is a field value validation called "on commit". Can be used to check related or dependent fields value in a form, when it is not important that user input is immediatlly stopped for input an incorrect value. This is called on form submit.
+
+### check_field_value and on_edit_form_shown
+
+But for validation only one field value best way is using `check_field_value` function which will be called on way which will prevents the user from leaving the input field when the value does not satisfy validation condition:
 
 ```js
 function on_edit_form_shown(item) {
@@ -163,13 +175,17 @@ function check_field_value(field) {
 }
 ```
 
-In `the on_edit_form_shown` event handler we iterate through all the fields using the each_field method and find the input for each field, if it exists. Each input has a class with the name of the field (`field_name`).
+In `the on_edit_form_shown` event handler we iterate through all the fields using the `each_field` method and find the input for each field, if it exists. Each input has a class with the name of the field (`field_name`).
 
-Then we assign a jQuery `blur` event to it, in which we call the `check_field_value` function, and, if it returns text string, we warn the user and focus the input. Before calling the function, we check whether the “Cancel” button was pressed.
+Then we assign a jQuery `blur` event to it, in which we call the `check_field_value` function, and if it returns text string, we warn the user and focus the input.
 
-We declared the on_edit_form_shown event handler in the item’s module, so it will work in this module only.
+Before calling the function, we check whether the "Cancel" button was pressed, and if it was, we break the validation and return from the event handler.
 
-We can declare the following event handler in the `task` client module so we can write `check_field_value` function in any module we need to enable this field validation. The `on_edit_form_shown` of the task is called first for every item when edit form is shown.
+We declared the `on_edit_form_shown` event handler in the item’s module, so it will work in this module only.
+
+### check_field_value and task on_edit_form_shown
+
+We can declare the following event handler in the `task` client module so we can write only `check_field_value` function in any module we need to enable this field validation. The `on_edit_form_shown` of the task is called first for every item when edit form is shown.
 
 ```js
 function on_edit_form_shown(item) {
@@ -191,20 +207,20 @@ function on_edit_form_shown(item) {
 }
 ```
 
-In this event handler we check if the item has the `check_field_value` attribute. Each function declared in a module becomes an attribute of the item.
+In this event handler we check if the item has the `check_field_value` attribute, so that we don't raise an exception if we call it and it is not defined for the given item.
 
 [Return to Content](#content)
 
 ## 03 How to add a button to a form
 
-The simplest way to add a button to an edit / view from is to use `add_edit_button` / `add_view_button` correspondingly. You can call this functions in the `on_edit_form_created` / `on_view_form_created` event handlers.
+The simplest way to add a button to an **edit / view** from is to use `add_edit_button` / `add_view_button` correspondingly. You can call this functions in the `on_edit_form_created` / `on_view_form_created` event handlers.
 
-For example the Customers item uses this code in its client module to add buttons to a view form:
+For example the "Customers" item uses this code in its client module to add buttons to a view form:
 
 ```js
 function on_view_form_created(item) {
-    item.table_options.multiselect = false;
-    if (!item.lookup_field) {
+    item.table_options.multiselect = false; 
+    if (!item.lookup_field) {   
         var print_btn = item.add_view_button('Print', {image: 'bi bi-printer'}),
             email_btn = item.add_view_button('Send email', {image: 'bi bi-mailbox'});
         email_btn.click(function() { send_email() });
@@ -214,17 +230,16 @@ function on_view_form_created(item) {
 }
 ```
 
-In this code the item’s `lookup_field` attribute is checked and if it is defined (the view form is not created to select a value for a lookup field) the two buttons are created and for them JQuery click events are assigned to `send_email` and `print` functions declared in that module.
+In this code, the item’s `lookup_field` attribute is checked and if it is not defined (the view form is not created to select a value for a lookup field) the two buttons are created and for them JQuery `click` events are assigned to `send_email` and `print` functions declared in that module.
 
 [Return to Content](#content)
 
 ## 04 How to execute Python code from client
 
-While it is possible to execute any Python script on the OS level with the `Popen` command, first we will demonstrate using the Server module[F8] code.
+> [!Note]
+> You can use `server` client method to send a request to the server to execute a function defined in the server module of an item.
 
-You can use `server` client method to send a request to the server to execute a function defined in the server module of an item.
-
-In the example below we create the btn button that is a JQuery object. Then we use its click method to attach a function that calls the server method of the item to run the calculate function defined in the server module of the item.
+In the example below we create the btn "button" that is a JQuery object. Then we use its `click` method to attach a function that calls the `server` method of the item to run the calculate function defined in the server module of the item.
 
 The code in the client module:
 
@@ -251,52 +266,17 @@ def calculate(item, a, b, c):
     return a + b + c
 ```
 
-To execute the OS script, we could use the Server module code with `Popen` and a button similar to above:
-
-```sh
-build = Popen([make, 'html'] , cwd=build_path, stderr=STDOUT,stdout = PIPE, shell=shell)
-result, err = build.communicate()
-result = result.decode("utf-8")
-```
-
-To review the build result, we can use JavaScript modal form with a button to display it:
-
-```js
-item.edit_form.find("#build-info-btn").hide().click(function() {
-    show_build_info(item);
-});
-
-function show_build_info(item) {
-    var i = 0,
-        color,
-        html = '<p>',
-        info = item.build_result.split('\n');
-
-    for (i = 0; i < info.length; i++) {
-        color = '#333333';
-        if (build_problems(item, info[i])) {
-            color = 'red';
-        }
-        html += '<span style="color: ' + color + ';">' + info[i] + '</span><br>';
-    }
-    html += '</p>';
-    html = $(html).css("margin", 20);
-    task.message(html, {width: 700, height: 600,
-        title: 'Build information', footer: false, print: true});
-}
-```
-
-On this example, the Sphinx `make` command is used to build Jam.py Docs.
-
-![how_to_run_python_script](images/02.png)
+When we click on the button we just created, the result of calling the server function `calculate` will be displayed in our browser's web console.
 
 [Return to Content](#content)
 
 ## 05 How to change style and attributes of form elements
 
+### Change DOM elements using JQuery
+
 You can access any DOM element on forms using jQuery.
 
-In the following example, in the `on_edit_form_created` event handler defined the item client module we find the OK button, hide it, and change the text of the Cancel button to “Close” in the edit form:
+In the following example, in the `on_edit_form_created` event handler defined the item client module we find the "OK" button, hide it, and change the text of the "Cancel" button to “Close” in the edit form:
 
 ```js
 function on_edit_form_created(item) {
@@ -307,7 +287,7 @@ function on_edit_form_created(item) {
 
 When an application creates input controls, it adds a class with a name that is the `field_name` attribute of the corresponding field to each input.
 
-Thus, using the jQuery selectors, we can find the input of the customer field as follows (we select the input with the “customer” class in the edit form):
+Thus, using the jQuery selectors, we can find the input of the customer field as follows (we select the `input` with the “customer” class in the edit form):
 
 ```js
 item.edit_form.find("input.customer")
@@ -315,7 +295,37 @@ item.edit_form.find("input.customer")
 
 Having found the element of the form you can use JQuery methods to change it.
 
-As the field inputs are created by `create_inputs` after the `on_edit_form_created` event have been triggered you must write `on_edit_form_shown` event handler to change inputs.
+#### JQuery selectors
+
+| Selectors | Type | Description | Example | Description of example |
+| --------- | ---- | ----------- | ------- | ---------------------- |
+| **Basic** | - | These are the most common selectors, functioning exactly like their CSS counterparts | - | - |
+| - | Element / Tag | Selects all elements with the specified `tag name` | `$("p")` | Targets all `<p>` elements. |
+| - | ID | Selects a single, unique element using its `id` attribute prefixed with a `#` | `$("#header")` | Targets the element with `id="header"` |
+| - | Class | Selects all elements that share a specific class attribute prefixed with a `.` | `$(".btn")` | Targets all elements with `class="btn"` |
+| - | Universal | Selects every single element on the current page. | `$("*")` | Targets all elements |
+| **Attribute** | - | These filter elements based on the presence or specific values of their HTML attributes | - | - |
+| - | Has Attribute | - | `$("a[target]")` | Targets all `<a>` tags that have a target attribute |
+| - | Exact Match | - | `$("input[type='text']")` | Targets `<input>` elements specifically where the type is text. |
+| - | Starts With | - | `$("a[href^='https']")` | Targets `links` where the href attribute begins with "https" |
+| **Positional & Hierarchy** | - | - | - | - |
+| - | Filters | These filter elements based on their order or relationship with other elements in the DOM tree | **First & Last**:</br> `$("li:first")` or `$("li:last")` </br> **Even & Odd**:</br> `$("tr:even")` or `$("tr:odd")` </br> **Index-Based**:</br> `(:eq):` </br> **Parent/Child**:</br> `$("div > p")` | Targets only the first or last `<li>` element in a list </br> Targets rows based on parity (highly useful for zebra-striping tables)  `$("li:eq(2)")` </br> Targets the 3rd item in a list (jQuery uses 0-based indexing).  </br> Targets `<p>` elements that are direct children of a `<div>` |
+| **Form** | - | jQuery offers shorthand pseudo-selectors specifically designed to make form manipulation easier. | - | - |
+| - | All Elements | - | `$(":input")` | Selects all `<input>`, `<textarea>`, `<select>` and `<button>` elements |
+| - | By State | - | `$(":checked")` or `$(":disabled")` | Targets checkboxes/radio buttons that are selected, or form fields that are currently disabled. |
+
+#### Quick Comparison Matrix
+
+| Selector Syntax | What it Selects | Pure JS Equivalent |
+| --------------- | --------------- | ------------------ |
+| `$("div")` | All `<div>` tags | `document.querySelectorAll('div')` |
+| `$("#logo")` | Element with ID "logo" | `document.getElementById('logo')` |
+| `$(".alert")` | All elements with class `"alert"` | `document.getElementsByClassName('alert')` |
+| `$("p:first")` | The very first paragraph | `document.querySelector('p')` |
+
+### Change DOM elements in on_edit_form_shown using CSS - dynamic way
+
+As the field inputs are created by `create_inputs`, after the `on_edit_form_created` event have been triggered, you must write `on_edit_form_shown` event handler to change inputs.
 
 For example this code
 
@@ -329,23 +339,33 @@ function on_edit_form_shown(item) {
 }
 ```
 
-will change form inputs this way:
+will change form inputs on this way:
 
 ![form_elements_style](images/03.png)
 
-Please, note that if you need to change the width of input with prepend or append buttons (inputs of date, datetime and lookup fields) set the width of the input parent:
+### Change input elements with prepend or append buttons
+
+Please, note that if you need to change the width of input with prepend or append buttons as is:
+
+- inputs of date,
+- datetime and
+- lookup fields
+
+set the width of the input parent:
 
 ```js
 item.edit_form.find('input.album').parent().width('50%');
 ```
 
-Another way to change the style of DOM elements is to use CSS. When the task node is selected in the Application Builder, the “project css” button is located on the right pane. Click on it to open the project.css file, which is located in the project folder. You can use it to input CSS that defines the style of the DOM elements of the project.
+### Change DOM elements using CSS - static way
 
-Each item form created in the project has css classes that enable developer to identify the form.
+When the task node is selected in the Application Builder, the "project css" button is located on the right pane. Click on it to open the "project.css" file, which is located in the project folder. You can use it to input CSS that defines the style of the DOM elements of the project.
+
+Each item form created in the project has `css classes` that enable developer to identify the form.
 
 Each form has a class identifying it’s type: ‘view-form’, ‘edit-form’, ‘filter-form’ or ‘param-form’.
 
-For example, the following code will remove the images in the buttons at the bottom of the form:
+For example, the following code will remove the images in the buttons at the bottom of the view form:
 
 ```js
 .view-form .form-footer .btn i {
@@ -366,7 +386,7 @@ More edit form examples:
 }
 ```
 
-Also each form has a class with a name that is the item_name attribute of the item.
+Also each form has a class with a name that is the `item_name` attribute of the `item`.
 
 The following code will remove images in the buttons only in the Invoices view form:
 
@@ -376,7 +396,7 @@ The following code will remove images in the buttons only in the Invoices view f
 }
 ```
 
-You can change the way tables are displayed. The tables that are created by the create_table method have a css class “dbtable” and a class with a name that is the item_name attribute of the item. Each column of the table also has a class with a name that is the field_name attribute of the corresponding field.
+You can change the way tables are displayed. The tables that are created by the `create_table` method have a css class `“dbtable”` and a class with a name that is the `item_name` attribute of the `item`. Each column of the table also has a class with a name that is the `field_name` attribute of the corresponding field.
 
 The example, the following code will display cells of the Invoices table Customer column bold:
 
@@ -385,6 +405,8 @@ The example, the following code will display cells of the Invoices table Custome
     font-weight: bold;
 }
 ```
+
+### Change DOM elements using `on_field_get_html` event handler - dynamic way 2
 
 One more way to change the way the field column is displayed is to write the `on_field_get_html` event handler.
 
@@ -408,9 +430,11 @@ To create a custom menu you must specify a `custom_menu` option for the task’s
 
 [Return to Content](#content)
 
-## 07 How to append a record using an edit form without opening a view form
+## 07 How to append or edit a record using an edit form without opening a view form
 
-You must first call the open method of the item to initiate its dataset. For example, if you want to add a new record to invoices in the Demo application, you can do so as follows:
+### Append a record
+
+You must first call the `open` method of the `item` to initiate its `dataset`. For example, if you want to add a new record to invoices in the Demo application, you can do so as follows:
 
 ```js
 var invoices = task.invoices.copy();
@@ -418,9 +442,13 @@ invoices.open({ open_empty: true });
 invoices.append_record();
 ```
 
-In this code, we create a copy of the item using the copy method so that this operation does not affect the Invoices view form if it is open in a tab.
+In this code, we create a copy of the item using the `copy` method so that this operation does not affect the Invoices view form if it is open in some other tab.
 
-You can also change the record, but before you do this, you must get it from the server. Below is the code that modifies the record with id 411. We check that the record exists using the rec_count property, otherwise we display a warning.
+### Edit a record
+
+You can also change the record, but before you do this, you must get it from the server. Below is the code that modifies the record with `id = 411`. We check that the record exists using the `rec_count` property, otherwise we display a warning.
+
+#### Synchronously way
 
 ```js
 var invoices = task.invoices.copy();
@@ -433,9 +461,11 @@ else {
 }
 ```
 
-In the example above the open method is executed synchronously.
+In the example above the open method is executed `synchronously`.
 
-The code below does it asynchronously:
+#### Asynchronously way
+
+The code below does it `asynchronously`:
 
 ```js
 var invoices = task.invoices.copy();
@@ -449,7 +479,7 @@ invoices.open({ where: {id: 411} }, function() {
 });
 ```
 
-Invoices has the Modeless attribute set in the Edit form dialog, so the the edit form with be opened in a tab. You can change it by setting modeless attribute of edit_options to make the edit form modal:
+Invoices has the `modeless` attribute set in the Edit form dialog, so the the edit form will be opened in a tab. You can change it by setting `modeless` attribute of edit_options to make the edit form modal:
 
 ```js
 var invoices = task.invoices.copy();
@@ -460,9 +490,11 @@ invoices.edit_options.modeless = false;
 
 ## 08 How to prohibit changing record
 
-Let’s assume that we have an item with a boolean field “posted”, and if the value of the field is true, we must prohibit changing or deleting the record.
+### Prohibit change of item in dependent a vield value
 
-We can do this by writing the on_after_scroll event handler and using permissions property:
+Let’s assume that we have an item with a boolean field with `field_name = posted`, and if the value of the field is `true`, we must prohibit changing or deleting the record.
+
+We can do this by writing the `on_after_scroll` event handler and using the `permissions` property:
 
 ```js
 function on_after_scroll(item) {
@@ -471,14 +503,21 @@ function on_after_scroll(item) {
         item.permissions.can_delete = !item.posted.value;
         if (item.view_form) {
             item.view_form.find("#delete-btn").prop("disabled", item.posted.value);
+            item.view_form.find("#edit-btn").prop("disabled", item.posted.value);
         }
     }
 }
 ```
 
-In this event handler we check the value of the “posted” field and set the permissions property attributes to true.
+In this event handler we check the value of the `posted` field and set the permissions property attributes to not of its value.
 
-We can also write the on_apply event handler in the server module of the item:
+> [!Note]
+>
+> Above code can be a part of management the "state" item scenario!
+
+### Prohibit change of item by writing `on_apply` event handler
+
+We can also write the `on_apply` event handler in the server module of the item:
 
 ```js
 def on_apply(item, delta, params, connection):
@@ -487,15 +526,41 @@ def on_apply(item, delta, params, connection):
           raise Exception('Document posted. No change allowed')
 ```
 
+> [!Note]
+>
+> - Result is the same as is above. But this is better way, if your target is not dynamically access management to buttons of a form.
+>
+> - Also, this code can be a part of management the "state" item scenario!.
+
+</br>
+
+> [!Note]
+>
+> A `delta` is a set of changed records of the current dataset. This means that at any given time we have three different sets of data:
+>
+> - current item dataset
+> - current dataset item changes - `delta`, compared to the loaded dataset item
+> - item table dataset
+>
+> Calling the item's `apply` method synchronizes all of three.
+>
+> To get the loaded values, we can refer to the `old_value` of any field in the `delta` dataset.
+
 [Return to Content](#content)
 
 ## 09 How to link two tables
 
-The below procedure was valid for Jam.py V5, for the scenario when the two database tables were not directly linked by a Master/Detail relationship within the Builder (see Tutorial. Part 3. Detail).
+The below procedure was valid for `Jam.py V5`, for the scenario when the two database tables were not directly linked by a `Master/Detail` relationship within the `Builder`.
 
-In Jam.py V7, the database table Tracks is directly linked to the detail table invoice_table, hence the below procedure is not needed. If the tables were not directly linked within the Builder, we could still use the procedure with Jam.py V7.
+In `Jam.py V7`, the database table Tracks is directly linked to the detail table invoice_table, hence the below procedure is not needed.
 
-We’ll explain how to link two items on example of the `Tracks` and `invoice_table` items from the Demo application. We’ll link the record of `Tracks` with the corresponding list of sold Tracks from `invoice_table` that contains all sold Tracks from Invoices table.
+If the tables were not directly linked within the Builder, we could still use the this procedure with `Jam.py` V7.
+
+> [!Note]
+>
+> This procedure only makes sense if we are doing a custom GUI setup to display these linked tables in both view and edit mode. Since V7 Jampy has a default setup, which is obtained by elementary manipulations in the ViewForm and EditForm Builder.
+
+We’ll explain how to link two items on example of the `Tracks` and `invoice_table` items from the Demo application.
 
 The default behavior of `view_form` is defined in the `on_view_form_created` event handler declared in the task client module.
 
@@ -545,7 +610,7 @@ This method sends a request to the server, that generates sql query, executes it
 
 If the tracks dataset is empty we clear the sold records dataset by calling the `close` method.
 
-Because controls in Jam.py are data-aware every change of sold records dataset will be displayed in the table that we created in the `on_view_form_created` event handler.
+Because controls in `Jam.py` are data-aware every change of sold records dataset will be displayed in the table that we created in the `on_view_form_created` event handler.
 
 Now every time the track has changed the application send request to the server to renew the sold tracks. This is not effective and sometimes can lead to delays. To avoid this we use the JavaScript `setTimeout` function:
 
@@ -588,7 +653,7 @@ item.invoice_table.create_table(item.view_form.find('.view-detail'), {
 });
 ```
 
-and define the function as follows:
+and define the function "show_invoices" as follows:
 
 ```js
 function show_invoice(invoice_table) {
@@ -821,7 +886,7 @@ def set_media_type(item, media_type, selections):
 
 You can do it by adding a button that will save the record without closing the edit form.
 
-Below is examples for synchronous and asynchronous cases.
+Below is examples for `synchronous` and `asynchronous` cases.
 
 ```js
 function on_edit_form_created(item) {
@@ -864,11 +929,23 @@ function on_edit_form_created(item) {
 
 ## 12 How to save changes to two tables in same transaction on the server
 
+> [!Note]
+>
+> Signature of the item `apply` method is:
+>
+> **apply(self, connection=None, params=None, safe=False)**:
+>
+> This method of the item writes all updated, inserted, and deleted records from a item dataset to a database.
+>
+> - if **connection** parameter is specified the appication uses it to execute sql query that it generates (it doesn’t commit changes and doesn’t close the connection),
+>
+> - otherwise it procures a **connection** from the task connection pool that will be returned to the pool after changes are commited.
+
 Below are two examples.
 
-In the first example each apply method gets its own connection from connection pool and commits it after saving changes to the database.
+In the first example each `apply` method gets its own `connection` from `connection pool` and commits it after saving changes to the database.
 
-In the second example the connection is received from connection pool and passed to each apply method so changes are committed at the end.
+In the second example the `connection` is received from `connection pool` and passed to each `apply` method so changes are committed at the end.
 
 ```py
 import datetime
@@ -928,11 +1005,15 @@ def change_invoice_date(item, invoice_id):
 
 ## 13 How to prevent duplicate values in a table field
 
-One of the ways to do it is to write the on_apply event handler.
+### First way: Write `on_apply` event handler
 
 In the example below, the `delta` parameter is a dataset that contains the changes that will be stored in the users table.
 
-We go through the records of changes and if the record was not deleted or the login field didn’t change we look for a record in the table with the same login and if it exists raise the exception. If the user is editing the record on the client using an edit form he won’t be able to save it and will see the corresponding alert message.
+We go through records of changes.
+
+If the record was not deleted or the login field didn’t change we look for a record in the table with the same login and if it exists `raise the exception`.
+
+If the user is editing the record on the client using an edit form he won’t be able to save it and will see the corresponding alert message.
 
 ```py
 def on_apply(item, delta, params, connection):
@@ -945,13 +1026,79 @@ def on_apply(item, delta, params, connection):
                 raise Exception('There is a user with this login - %s' % d.login.value)
 ```
 
+### Second way: Use th unique key
+
+> [!Note]
+>
+> For a long time, in modern databases, this operation has been performed by setting a UNIQUE constraint on a field whose value cannot be repeated.
+
+**Example for PostgreSQL database**:
+
+A PostgreSQL `UNIQUE` constraint ensures that all values in a column or a group of columns are distinct across the entire table. When you add a unique constraint, PostgreSQL automatically creates a behind-the-scenes unique B-tree `index` to enforce it efficiently.
+
+- **Single-Column Unique Constraint**  
+
+  You can define a unique constraint directly on a column when creating a new table.
+  
+  ```sql
+  CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE -- Column-level constraint
+  );
+  ```
+
+- **Multi-Column Unique Constraint**
+
+  If you need a combination of columns to be unique, you must declare it as a table-level constraint.
+  
+  ```sql
+  CREATE TABLE company_branches (
+    id SERIAL PRIMARY KEY,
+    company_name TEXT,
+    location_city TEXT,
+    UNIQUE (company_name, location_city) -- Table-level constraint
+  );
+  ```
+
+  In this example, multiple rows can have "London" as the city, and multiple rows can have "Google" as the company, but there can only be one row where the company is "Google" and the city is "London".
+
+- **Adding and Removing Constraints on Existing Tables**
+
+  If your table already exists, use `ALTER TABLE` to manage constraints.
+
+  - **Add a unique constraint**
+  
+    ```sql
+    ALTER TABLE users 
+    ADD CONSTRAINT unique_user_email UNIQUE (email);
+    ```
+  
+    **Note**: This will fail if your table already contains duplicate values in that column.
+
+  - **Drop a unique constraint**
+  
+    ```sql
+    ALTER TABLE users 
+    DROP CONSTRAINT unique_user_email;
+    ```
+
+- **Handling NULL Values**
+  By default, standard SQL treats NULL values as completely distinct one from another. This means you can insert multiple rows with NULL into a standard `unique` column. If you want to treat NULL values as equal (meaning you only allow one NULL in that column), you can use the `NULLS NOT DISTINCT` modifier:
+  
+  ```sql
+  -- Treats multiple NULLs as duplicate violations
+  CREATE TABLE products (
+    product_id INT,
+    serial_number TEXT,
+    CONSTRAINT unique_serial UNIQUE NULLS NOT DISTINCT (serial_number)
+  );
+  ```
+
 [Return to Content](#content)
 
-## 14 How to implement some sort of basic multi-tenancy? For example, to have users with separate data
+## 14 How to implement some sort of basic multi-tenancy
 
-You can implement a multi-tenancy using Jam.py.
-
-For example, if some item has a `user_id` field (type INT), the following code in the server module of the item will do the job. The authentication must be enabled:
+If some item has a `user_id` field (type INT), the following code in the server module of the item will do the job. The authentication must be enabled:
 
 ```py
 def on_open(item, params):
@@ -1015,7 +1162,7 @@ The user might combine the above with the authentication.
 
 [Return to Content](#content)
 
-## 15 Importing existing database tables
+## 15 How to import existing database tables
 
 For importing existing database tables:
 
@@ -1039,29 +1186,27 @@ For importing existing database tables:
 
 - After importing several tables, you can specify lookup fields (in DB manual mode).
 
-**Note**:
-
-Please, do be very careful when performing this operations.
-
-When `DB manual mode` is removed any changes to the item will be reflected in the corresponding DB table. If you delete the item, the table will be dropped from the database.
-
-**Note**:
-
-The database table to be imported must have a primary key with one field.
-
-**Note**:
-
-Binary fields must not be imported.
-
-**Note**:
-
-The indexes are not imported.
+> [!Note]
+>
+> - Please, do be very careful when performing this operations.
+>
+>   When `DB manual mode` is removed any changes to the item will be reflected in the corresponding DB table. If you delete the item, the table will be dropped from the database.
+>
+> - The database table to be imported must have a primary key with one field.
+>
+> - Binary fields must not be imported.
+>
+> - The indexes are not imported.
 
 [Return to Content](#content)
 
-## 16 How can I use data from some other database(s) tables
+## 16 How to use data from some other database(s) tables
 
-You can use data from other database tables. It is not possible to use fields as Lookups on other tables this way.
+You can use data from other database tables.
+
+It is not possible to use fields as Lookups on other tables this way.
+
+### First way - Connect to other database and import tables
 
 First you must specify table name and fields information. You can do it the following way:
 
@@ -1075,7 +1220,11 @@ First you must specify table name and fields information. You can do it the foll
 
 - Select project node in the task tree, click Database button and restore previous values.
 
-The other method is to manually create each table and fields matching the source. The `DB manual mode` must be set.
+### Second way - manualy create each tabele and fields
+
+The other method is to manually create each table and fields matching the source.
+
+The `DB manual mode` must be set.
 
 Then in the Server module for the new items, add code to read and write the data to the database tables by using `on_open` and `on_apply` with `create_connection_ex`.
 
@@ -1102,6 +1251,7 @@ def on_open(item, params):
     finally:
         connection.close()
     return rows, ''
+
 def on_apply(item, delta, params, con):
     connection = item.task.create_connection_ex(
         db,
@@ -1136,9 +1286,9 @@ from jam.db.postgres_db import db
 from jam.items import QueryData
 ```
 
-**Note**:
-
-The below procedure was not tested with Jam.py V7.
+> [!Note]
+>
+> The below procedure was not tested with `Jam.py` V7.
 
 If database use generators to get primary field values, you must specify them for new records (Firebird):
 
@@ -1184,23 +1334,23 @@ def on_apply(item, delta, params):
     return result
 ```
 
-**Note**:
-
-Do not set `History` attribute to `True` for this tables. If you do so you’ll get the exception. `History` table must be one for all databases that you use in the project. You can try to create the history table in the other database and write the `on_open` and `on_apply` event handlers for it.
+> [!Note]
+>
+> Do not set `History` attribute to `True` for this tables. If you do so you’ll get the exception. `History` table must be one for all databases that you use in the project. You can try to create the history table in the other database and write the `on_open` and `on_apply` event handlers for it.
 
 [Return to Content](#content)
 
-## 17 How I can process a request or get some data from other application or service
+## 17 How to process a request or get some data from other application or service
 
 You can access the data of your application for reading and writing by sending a post request that has `ext` added to url. For example:
 
 ```html
-<http://your_jampy_app.com/ext/something>
+http://your_jampy_app.com/ext/something
 ```
 
 When an web app on the server receives such request, it generates the `on_ext_request` event.
 
-For example, Jam.py application `table account_transactions` has a field `actual_amount`. The application Task Module has:
+For example, `Jam.py` application `table account_transactions` has a field `actual_amount`. The application Task Module has:
 
 ```py
 def on_ext_request(task, request, params):
@@ -1267,7 +1417,7 @@ curl  http://localhost:8080/ext/bla -d '{"id": "2", "firstname": "Leonie"}' -H "
 
 ### Consuming data from the request
 
-The same application from above can be accessed from some other Jam.py app with Server Module:
+The same application from above can be accessed from some other `Jam.py` app with Server Module:
 
 ```py
 try:
@@ -1357,7 +1507,7 @@ The result will be displayed table with fetched value from endpoint with the req
 
 [Return to Content](#content)
 
-## 18 How can I perform calculations in the background
+## 18 How to perform calculations in the background
 
 You can use this code in the task server module to run a background thread in the web application once a 3 minutes (can be changed by setting interval) to perform some calculations:
 
@@ -1393,19 +1543,16 @@ def on_created(task):
     bg.start()
 ```
 
-**Note**:
-
-When multiple web applications are running in parallel processes, the background function will be executed in each process. To prevent simultaneous execution of this function, we use the lock method of the task.
-
-**Note**:
-
-The Jam.py V7 introduced the calculated field. It is now possible to use the server side functions (SUM, COUNT, MIN, MAX, AVG), for the lookup to some other table field in a Master/Detail scenario. The Users might review the server side calculations code and replace it with a calculated fields, if appropriate.
+> [!Note]
+>
+> - When multiple web applications are running in parallel processes, the background function will be executed in each process. To prevent simultaneous execution of this function, we use the lock method of the task.
+>
+> - The `Jam.py` V7 introduced the `calculated` field.  
+>   It is now possible to use the server side functions (SUM, COUNT, MIN, MAX, AVG), for the lookup to some other table field in a Master/Detail scenario. The Users might review the server side calculations code and replace it with a calculated fields, if appropriate.
 
 [Return to Content](#content)
 
-## 19 Is it supported to have details inside details
-
-Yes, you can have details inside details.
+## 19 How to have details inside details
 
 Suppose we have three objects - “Polls”, “Questions” and “Answers.” “Answers” is a detail of “Questions”. We will make “Questions” a detail of “Polls”.
 
@@ -1457,9 +1604,15 @@ function on_before_delete(item) {
 
 ![details](images/06.png)
 
+> [!Note]
+>
+> - This is old, old way for master -> details, master -> details cascade relationships.  
+> - I think that is much better, use of `Jamp.py` V7 fetures with master -> detail, and cascasde master -> detail method. On this way completly build is in Builder, and management this three relationships rest in `Jam.py`.  
+> - Here, is default that second master is first detail, of course.
+
 [Return to Content](#content)
 
-## 20 Export to / import from csv files
+## 20 how to export to / import from csv files
 
 First, in the client module of the item we create two buttons that execute the corresponding functions when you click on them:
 
@@ -1469,6 +1622,17 @@ function on_view_form_created(item) {
       csv_export_btn = item.add_view_button('Export csv file');
   csv_import_btn.click(function() { csv_import(item) });
   csv_export_btn.click(function() { csv_export(item) });
+}
+
+function csv_import(item) {
+    task.upload('static/files', {accept: '.csv', callback: function(file_name) {
+        item.server('import_scv', [file_name], function(error) {
+            if (error) {
+                item.warning(error);
+            }
+            item.refresh_page(true);
+        });
+    }});
 }
 
 function  csv_export(item) {
@@ -1482,17 +1646,6 @@ function  csv_export(item) {
             window.open(encodeURI(url));
         }
     });
-}
-
-function csv_import(item) {
-    task.upload('static/files', {accept: '.csv', callback: function(file_name) {
-        item.server('import_scv', [file_name], function(error) {
-            if (error) {
-                item.warning(error);
-            }
-            item.refresh_page(true);
-        });
-    }});
 }
 ```
 
@@ -1550,8 +1703,10 @@ First, start with forking Jam.py-v7.
 
 Next, clone your fork:
 
+```sh
 git clone <https://github.com/YourGitHubName/jam-py-v7.git>
 cd jam-py-v7/tests/project
+```
 
 To add a new test for the front-end, add JavaScript file into project/js folder. Let’s say we want to test user table with CRUD, using one field called username.
 
@@ -1648,33 +1803,34 @@ If all good to go, create a Github pull request with the changes.
 
 ## 22 How to cascade delete records
 
-This example is using Demo Albums and Artists tables. For any Albums record, it is not possible to delete the record if the lookup Artist record exists in the Artists table. And vice versa.
+> [!Note]
+> Instead of being an easy-to-read and very clearly written text, this How to also knows how to veer into the waters of "gray". Although life is just that, gray, that's life and it is `Jam.py How to`.
+>
+> That's exactly why I wrote this part from the beginning!
 
-However, if Soft Delete is used, we can use the below Server Module code to change the Deleted flag to True. For tables with the “Foreign Key” constraint, only the Soft Delete is needed to achieve the same result. The records will not be physically deleted in this case. For table with no “Foreign Key” constraint and no Soft Delete, the records will be deleted permanently.
+### About type of relationships in Jam.py
 
-The below code is within the Albums Server Module:
+- If one table has a `1:n` relationship to another, then the other has an `n:1` relationship to first. This is not "and vice versa" and cannot be.
 
-```py
-def cascade_artist_children(delta=None, connection=None):
+  A `1:n` relationship is the relationship like in the Demo application between "invoices" and "invoice_table". We also call it `Master/Detail`, `Parent/Child` and `1 to many` relationships!
 
-    artists = task.artists.copy(handlers=False)
-    artists.set_where(id=delta.artist.value)
-    artists.open()
+- The n:1 relation, `many to 1` or `lookup`, is the most commonly used relationships in databases application world. Jam.py gave it special importance, because its existence allows to build the opposite `1:n` relationship in the Builder.
 
-    for i in range(artists.record_count()):
-        artists.rec_no = i
-        artists.delete()
-    artists.apply()
+  **Note**: And some of other frameworks gave it feature, but with writting the code on special syntax.
 
-    print("Delete applied successfully!")
+### `Foreigin key` and `Soft Delete`
 
-def on_before_apply_record(item, delta, params, connection):
-    if delta and hasattr(delta, 'rec_deleted') and delta.rec_deleted():
-        cascade_artist_children(delta, connection)
-        delta._lookup_refs = {}
-```
+- If `Soft Delete` is used, we can use the below Server Module code to change value of the `Deleted` field to `True`, ie., taged `Detail` records to `Deleted`. This operation is not have invarince, this is a non-sense!
 
-Similar code for Artists table:
+- If the `Foreign Key` constraint is used, `Soft Delete` is not needed. Using `Foreigin key` will achieve the same result, if `Foreign key` is in mode `cascade`.
+
+- For table with no `Foreign Key` constraint and no `Soft Delete`, records will be deleted permanently.
+
+### How to taged as deleted Album records when Artist record is taged as deleted
+
+Specifically, Artist vs Albums is a `1:n` relationship, or viewed from the Albums side, Artist is a `lookup` item to Album.
+
+Code for Artists table:
 
 ```py
 def cascade_albums_children(delta=None, connection=None):
@@ -1688,7 +1844,7 @@ def cascade_albums_children(delta=None, connection=None):
         albums.delete()
     albums.apply()
 
-    print("Delete applied successfully!")
+    print("Album records taged as deleted successfully!")
 
 def on_before_apply_record(item, delta, params, connection):
     if delta and hasattr(delta, 'rec_deleted') and delta.rec_deleted():
@@ -1705,11 +1861,24 @@ function on_before_delete(item) {
 }
 ```
 
+> [!Note]
+>
+> - In version V7 `Jam.py` does everything itself so the above code is not needed.
+>
+> - On a database where FK rules are established by the database itself cascade deleting matching records according to the mode of the FK established during table creation or later, dynamically, with alter table!
+>
+> - By me, cascade deleting records is too danger, and I not use it. I always use FK mode RESTRICTED. That way, trying to delete a record that is referenced will not allowed by the database.  
+    Besides, deleting a master data record is a bit of a strange operation, isn't it?
+>
+> - A similar mode can be achieved with the F_CHECK_BEFORE_DELETING attribute of a field that is defined as a lookup field.
+>
+> - Behaviour cascading delete of records depedent on item attribut F_MASTER_APPLIES. If this atribut is set, records in relationships will be threated in differrent transaction. If this atribut is not set, deleting will be in one transcation, and it is default case.
+
 [Return to Content](#content)
 
-## 23 How to Navigate Between Forms While Preserving Data
+## 23 How to transfer data between forms
 
-This guide explains how to navigate from one form to another while maintaining data integrity across forms, when creating a new record with modal form.
+This guide explains how to transfer data from one form to another, when creating a new record with modal form.
 
 The pattern involves:
 
@@ -1719,19 +1888,9 @@ The pattern involves:
 
 - Form 1 that receives data from Form 2, saves record, or go back optionally:
 
-```sh
-            DB record
-               ↑
-
-Form 2        Form 1
-
- ↓ ↑           ↓ ↑
-  └──  loop    ─┘
-```
-
 1. **Set Up the Initial View**
 
-   Add a New button to your View that opens Form 2:
+   Add a New button to your View that opens Form 2, with add record in f2.
 
    ```js
    // ===== VIEW CONFIGURATION =====
@@ -1748,11 +1907,11 @@ Form 2        Form 1
  
    function openForm2() {
        task.f2.open({open_empty: true});
-       task.f2.append_record();
+       task.f2.append_record();  // creates record in memory only, not yet saved to DB
    }
    ```
 
-2. **Configure Form 2 (Intermediate Form)**
+2. **Configure Form 2 (Intermediate Form)**
 
    Set up Form 2 with a Next Form button that navigates back to Form 1:
 
@@ -1764,8 +1923,8 @@ Form 2        Form 1
            .text('Next Form')
            .off('click.task')
            .on('click', function() {
-               item.close_edit_form();
-               setTimeout(function() {
+               item.close_edit_form();  // only hides the modal UI, task.f2 and its record stay in memory
+               setTimeout(function() {  // wait for the close animation/DOM teardown before opening the next modal
                    openForm1(item);
                }, 300);
            });
@@ -1777,7 +1936,7 @@ Form 2        Form 1
    }
 
    function on_edit_form_close_query(item) {
-       return true;
+       return true;  // skip the "unsaved changes" confirmation, since data is only being handed off, not lost
    }
    ```
 
@@ -1792,7 +1951,7 @@ Form 2        Form 1
        var title = 'First Form value: ';
 
        if (item.is_new()) {
-           // Transfer data from Form 2 to Form 1
+           // task.f2 is still a live item even though its form was closed, so its value is readable here
            item.f1t1.value = task.f2.f2t1.value;
    
            if (item.f1t1.value) {
@@ -1855,11 +2014,8 @@ Form 2        Form 1
 **Key Points to Remember**:
 
 - `open_empty`: `true` - Ensures forms open without pre-loaded data
-
 - `append_record()`: - Adds a new empty record to the form
-
 - `setTimeout()`: - Allows proper form closure before opening the next form
-
 - `on_edit_form_close_query`: Returns true to bypass unsaved changes warnings
 
 **Field Mapping Reference**:
@@ -1870,7 +2026,7 @@ Form 2        Form 1
 
 [Return to Content](#content)
 
-## 24 Custom production html page
+## 24 How to do with custom production html page
 
 When access to Application Builder is disabled on Paramaters, the plain Application Builder production mode is displayed.
 
@@ -1937,34 +2093,26 @@ To change the content to forward user to application instead, use below for buil
 
 ## 25 How to migrate development to production
 
-Migrating development to production is very simple in Jam.py due to the ability to export and import its metadata.
+Migrating development to production is very simple in `Jam.py` due to the ability to export and import its metadata.
 
 To understand the concept of metadata and the process of exporting and importing metadata, please read the topic `Export/import metadata`. The process of importing metadata depends on the type of project database.
 
 ### New project migration
 
 - Create an empty database in the production environment
-
 - Run `jam-project.py` script to create a new project
-
 - Set up the server.
-
-  - See Jam.py deployment with `Apache` and `mod_wsgi`.
+  - See `Jam.py` deployment with `Apache` and `mod_wsgi`.
 
 ### How to deploy
 
 - In the browser start the Application Builder and finish the creation of the project with an empty database.
-
 - open Parameters dialogue to set up the project. Setup the following parameters:
-
   - `Production` to `true`
-
   - `Safe mode`
-
   - `Debugging` to `false`
 
 - Export the metadata of the development project to a zip file in the Application Builder by clicking the Export button.
-
 - Import the metadata to the new project.
 
 > [!Note]
@@ -1974,12 +2122,11 @@ To understand the concept of metadata and the process of exporting and importing
 ### Existing project migration
 
 - Export the metadata of the development project to a zip file.
-
 - Import the metadata to the production project.
 
 > [!Note]
 >
-> For SQLite database, Jam.py doesn’t support importing of metadata into an existing project (project with tables in the database). You can only import metadata into a new project.
+> For SQLite database, `Jam.py` doesn’t support importing of metadata into an existing project (project with tables in the database). You can only import metadata into a new project.
 
 ### Importing metadata with the http server process shutdown
 
@@ -2006,15 +2153,10 @@ For example, you developed your project with SQLite database and want to move to
 To do this, follow these steps:
 
 - Create an empty Postgress database
-
 - Create a new project with this database
-
 - Export the metadata of the SQLite project to a zip file in the Application Builder by clicking the Export button.
-
 - Import the metadata to the new project. The web application create database structures in the Postgress database.
-
 - copy data from SQlite to Postgress database using the `copy_database` method of the task:
-
   - within the ProjectTask create the following Server Module function (adjust the below database path with correct one):
 
     ```py
@@ -2055,7 +2197,7 @@ To do this, follow these steps:
 >
 > You can not migrate to SQLite database if the current database has foreign keys.
 
-## 27 How to deploy jam-py app at Linux Apache http server
+## 27 How to deploy `Jam.py` app at Linux Apache http server
 
 So basically deploying straight into the ie an cloud server with open 22, 80 and 443 port. Prerequisite is a signed certificate for the DNS server name (YOUR_SERVER DNS entry from below). One can use a self signed, etc, not covering those. Also, Python installed and sudo access (or root for Linux). I have no idea at all about the MS Servers, sorry.
 
@@ -2073,7 +2215,7 @@ Enable `ssl`, `wsgi` module for apache:
 a2enmod ssl wsgi
 ```
 
-Create a custom file for jam-py app, ie /etc/apache2/sites-available/test.conf, for example (still wip):
+Create a custom file for `Jam.py` app, ie /etc/apache2/sites-available/test.conf, for example (still wip):
 
 ```sh
 <IfModule mod_ssl.c>
@@ -2119,11 +2261,12 @@ Create a custom file for jam-py app, ie /etc/apache2/sites-available/test.conf, 
 ```
 
 The above file is using signed certificate `your.crt` with `your.key`, and CA, chain file obtained from CA. Please review resources on the net about certificates and the dns. You’ll need to obtain and copy those files in `/etc/ssl/private` folder. Change YOUR_xyz with your preference.
+
 The `/var/www/html` is the default Ubuntu folder for serving web pages.
 
-### Install jam-py as usual
+### Install `Jam.py` as usually
 
-I created the `/var/www/html/simpleassets` folder where unzipped jam-py SimpleAssets project. Follow procedure explained there how to deploy these:
+I created the `/var/www/html/simpleassets` folder where unzipped `Jam.py` SimpleAssets project. Follow procedure explained there how to deploy these:
 
 - Basically, Export your project,
 - save the zip file and copy it to your web hosting server desired folder.
@@ -2132,13 +2275,13 @@ I created the `/var/www/html/simpleassets` folder where unzipped jam-py SimpleAs
 - Enable test.conf (the above file name with no extension):
 - `a2ensite test; systemctl restart apache2`
 
-That is it. At the moment, I’ve left port 80 as is, and jam-py is running only on https port. To debug problems, I would start with SeLinux or apparmor. With Ubuntu this might help:
+That is it. At the moment, I’ve left port 80 as is, and `Jam.py` is running only on https port. To debug problems, I would start with SeLinux or apparmor. With Ubuntu this might help:
 
 ```py
 sudo /etc/init.d/apparmor stop
 ```
 
-Now, here is the question of how to run TWO jam-py instances on one https server?
+Now, here is the question of how to run TWO `Jam.py` instances on one https server?
 
 One possible answer to this problem is the DNS. You might decide to set your DNS to ie second_instance.YOUR_SERVER name (the above live example would be jam2.research…).
 
@@ -2195,7 +2338,7 @@ The `/etc/apache2/sites-available/test3.conf` file:
 </IfModule>
 ```
 
-The jam-py application second_instance lives now in ie `/var/www/html/simpleassets3`, and `WSGIDaemonProcess` is adjusted to new daemon, called assets3. Everything else is almost the same.
+The `Jam.py` application second_instance lives now in ie `/var/www/html/simpleassets3`, and `WSGIDaemonProcess` is adjusted to new daemon, called assets3. Everything else is almost the same.
 
 This is possible because the SSL certificate is a * (star, or wildcard) certificate, enabling you to run multiple services on one DNS domain.
 
@@ -2222,7 +2365,7 @@ gunicorn wsgi
 ...
 ```
 
-To start jam.py on all interfaces and port 8081:
+To start `Jam.py` on all interfaces and port 8081:
 
 ```sh
 gunicorn -b 0.0.0.0:8081 wsgi
@@ -2246,7 +2389,7 @@ from asgiref.wsgi import WsgiToAsgi
 application = WsgiToAsgi(create_application(__file__))
 ```
 
-To start jam.py on localhost and port 8000:
+To start `Jam.py` on localhost and port 8000:
 
 ```sh
 uvicorn asgi:application
@@ -2363,36 +2506,59 @@ server {
 }
 ```
 
-That’s it!
+## 29 How to do increment search by lookup fields
 
-Congratulations! We can now test Nginx with Jam.py on https port!
+When user clicks on the button to the right of the field input or uses `typeahead`, the application creates a copy of the lookup item of the field and triggers `on_field_select_value event`. Use on_field_select_value to specify fields that will be displayed, set up filters for the lookup item, before it will be opened.
+
+`on_field_select_value` event handler has signature as following:
+
+**on_field_select_value(field, lookup_item)**:
+
+In short, `on_field_select_value` is used for locating or identifying the record on the lookup table when we click on the lookup icon.
+
+- The `field` parameter is the field whose data will be selected.
+- The `lookup_item` parameter is a copy of the lookup item of the field.
+
+**Example**:
+
+```js
+function on_field_select_value(field, lookup_item) {
+    if (field.field_name === 'customer') {
+        lookup_item.set_where({lastname__startwith: field.value});
+        lookup_item.view_options.fields = ['firstname', 'lastname', 'address', 'phone'];
+    }
+}
+```
 
 ---
 
-[00]: #00-what-is-new-in-v7
-[01]: #01-how-do-i-write-global-scope-functions
+[00]: #00-what-is-new-in-jampy-v7
+[01]: #01-how-to-write-global-scope-functions
 [02]: #02-how-to-validate-field-value
 [03]: #03-how-to-add-a-button-to-a-form
 [04]: #04-how-to-execute-python-code-from-client
 [05]: #05-how-to-change-style-and-attributes-of-form-elements
 [06]: #06-how-to-create-a-custom-menu
-[07]: #07-how-to-append-a-record-using-an-edit-form-without-opening-a-view-form
+[07]: #07-how-to-append-or-edit-a-record-using-an-edit-form-without-opening-a-view-form
 [08]: #08-how-to-prohibit-changing-record
 [09]: #09-how-to-link-two-tables
 [10]: #10-how-to-change-field-value-of-selected-records
 [11]: #11-how-to-save-edit-form-without-closing-it
 [12]: #12-how-to-save-changes-to-two-tables-in-same-transaction-on-the-server
 [13]: #13-how-to-prevent-duplicate-values-in-a-table-field
-[14]: #14-how-to-implement-some-sort-of-basic-multi-tenancy-for-example-to-have-users-with-separate-data
-[15]: #15-importing-existing-database-tables
-[16]: #16-how-can-i-use-data-from-some-other-databases-tables
-[17]: #17-how-i-can-process-a-request-or-get-some-data-from-other-application-or-service
-[18]: #18-how-can-i-perform-calculations-in-the-background
-[19]: #19-is-it-supported-to-have-details-inside-details
-[20]: #20-export-to--import-from-csv-files
+[14]: #14-how-to-implement-some-sort-of-basic-multi-tenancy
+[15]: #15-how-to-import-existing-database-tables
+[16]: #16-how-to-use-data-from-some-other-databases-tables
+[17]: #17-how-to-process-a-request-or-get-some-data-from-other-application-or-service
+[18]: #18-how-to-perform-calculations-in-the-background
+[19]: #19-how-to-have-details-inside-details
+[20]: #20-how-to-export-to--import-from-csv-files
 [21]: #21-how-to-write-tests
-[23]: #23-how-to-navigate-between-forms-while-preserving-data
+[23]: #23-how-to-transfer-data-between-forms
 [22]: #22-how-to-cascade-delete-records
-[24]: #24-custom-production-html-page
+[24]: #24-how-to-do-with-custom-production-html-page
 [25]: #25-how-to-migrate-development-to-production
 [26]: #26-how-to-migrate-to-another-database
+[27]: #27-how-to-deploy-jampy-app-at-linux-apache-http-server
+[28]: #28-how-to-do-with-nginx-with-gunicorn-or-uvicorn
+[29]: #29-how-to-do-increment-search-by-lookup-fields
